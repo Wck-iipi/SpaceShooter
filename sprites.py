@@ -1,4 +1,5 @@
-from settings import pygame
+from settings import pygame, screen
+import shared_state
 
 # No of frames in the sprite sheet of engine
 # Bomber - 10
@@ -19,6 +20,8 @@ __ship_information = {
     "player": {"frames": 8, "width": 128, "height": 128},
 }
 
+__animation_cooldown = 150
+
 
 def get_image(name, frame_number, scale):
     base = pygame.image.load(name + "/base.png").convert_alpha()
@@ -34,3 +37,25 @@ def get_image(name, frame_number, scale):
     image = pygame.transform.scale(image, (width * scale, height * scale))
 
     return image
+
+
+def get_animation_list(name, scale=2):
+    ship_name = name.split("/")[2]
+    animation_list = []
+
+    for i in range(__ship_information[ship_name]["frames"]):
+        animation_list.append(get_image(name, i, scale))
+
+    return animation_list
+
+
+def start_animation(animation_list, x, y):
+    current_time = pygame.time.get_ticks()
+
+    if current_time - shared_state.last_update >= __animation_cooldown:
+        shared_state.frame_number += 1
+        shared_state.last_update = current_time
+        if shared_state.frame_number >= len(animation_list):
+            shared_state.frame_number = 0
+
+    screen.blit(animation_list[shared_state.frame_number], (x, y))
