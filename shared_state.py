@@ -2,10 +2,11 @@ from collections import deque
 from typing import List
 from settings import pygame
 
-frame_number = 0
+frame_number = [0 for _ in range(500)]  # type: List[int]
+sprite_name = ["" for _ in range(500)]  # type: List[str]
 scroll = 0
 last_update = 0
-animation_list = [None for _ in range(500)]  # type: List[pygame.Surface]
+animation_list = [None for _ in range(500)]
 x_coordinates = [0 for _ in range(500)]  # type: List[int]
 y_coordinates = [0 for _ in range(500)]  # type: List[int]
 empty_index = deque(r for r in range(500))  # type: deque
