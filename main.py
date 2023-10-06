@@ -4,7 +4,7 @@ from sprites import (
     start_animation,
     create_new_sprite_object,
     movement_player_sprite,
-    shoot_player_sprite,
+    add_sprite_movement,
 )
 import shared_state
 
@@ -33,7 +33,7 @@ while run:
                 )
 
     movement_player_sprite()
-    shoot_player_sprite()
+    add_sprite_movement()
 
     pygame.display.flip()
 

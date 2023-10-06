@@ -66,9 +66,9 @@ def get_animation_list(name, scale=2):
 def start_animation():
     current_time = pygame.time.get_ticks()
     time_diff_bool = current_time - shared_state.last_update >= __animation_cooldown
+    add_sprite_movement()
 
-    # TLDR; future varun the problem is that screen.blit should not be
-    # inside current_time if statement and should be outside it.
+
     for r in shared_state.filled_index:
         x = shared_state.x_coordinates[r]
         y = shared_state.y_coordinates[r]
@@ -77,8 +77,6 @@ def start_animation():
             shared_state.last_update = current_time
             if shared_state.frame_number[r] >= len(shared_state.animation_list[r]):
                 shared_state.frame_number[r] = 0
-
-        print(r, shared_state.frame_number[r])
         screen.blit(
             shared_state.animation_list[r][shared_state.frame_number[r]], (x, y)
         )
@@ -87,12 +85,13 @@ def start_animation():
 def create_new_sprite_object(name, scale=2):
     index = shared_state.empty_index.popleft()
     shared_state.filled_index.append(index)
-
     shared_state.animation_list[index] = get_animation_list(name, scale)
     shared_state.sprite_name[index] = name.split("/")[2]
-    # # Represents the animation object and the shared_state coordinate index
-    # sprite_object = [index, shared_state.animation_list[index]]
-    # return sprite_object
+
+    if name.split("/")[1] == "projectiles":
+        if name.split("/")[2] == "torpedo":
+            shared_state.x_coordinates[index] = shared_state.x_coordinates[0] + 53
+            shared_state.y_coordinates[index] = shared_state.y_coordinates[0]
 
 
 def movement_player_sprite():
@@ -114,5 +113,26 @@ def movement_player_sprite():
             shared_state.y_coordinates[0] += 5
 
 
-def shoot_player_sprite():
-    pass
+def add_sprite_movement():
+    remove_filled_sprite_index = []
+    for r in shared_state.filled_index:
+        if shared_state.sprite_name[r] == "torpedo":
+            if torpedo_animation(r):
+                remove_filled_sprite_index.append(r)
+
+    for r in remove_filled_sprite_index:
+        shared_state.filled_index.remove(r)
+
+
+def torpedo_animation(r):
+    print(r)
+    if shared_state.y_coordinates[r] <= -50:
+        shared_state.empty_index.appendleft(r)
+        shared_state.x_coordinates[r] = 0
+        shared_state.y_coordinates[r] = 0
+        shared_state.frame_number[r] = 0
+        shared_state.animation_list[r] = None
+        shared_state.sprite_name[r] = ""
+        return True
+    shared_state.y_coordinates[r] -= 5
+    
