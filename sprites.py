@@ -1,4 +1,6 @@
+# TODO: Object is not getting destroyed, even though index is freed:(
 from settings import pygame, screen
+from random import randint
 import shared_state
 
 # No of frames in the sprite sheet of engine
@@ -23,6 +25,7 @@ __sprite_information = {
 
 __animation_cooldown = 150
 
+__is_direction_left = { }
 
 def get_image(name, frame_number, scale):
     if name.split("/")[1] == "enemy" or name.split("/")[1] == "player":
@@ -91,6 +94,10 @@ def create_new_sprite_object(name, scale=2):
         if name.split("/")[2] == "torpedo":
             shared_state.x_coordinates[index] = shared_state.x_coordinates[0] + 53
             shared_state.y_coordinates[index] = shared_state.y_coordinates[0]
+    elif name.split("/")[1] == "enemy":
+        shared_state.x_coordinates[index] = randint(0, 900)
+        shared_state.y_coordinates[index] = -90
+
 
 
 def movement_player_sprite():
@@ -116,24 +123,48 @@ def add_sprite_movement():
     remove_filled_sprite_index = []
     for r in shared_state.filled_index:
         if shared_state.sprite_name[r] == "torpedo":
-            if torpedo_animation(r):
-                remove_filled_sprite_index.append(r)
+            torpedo_animation(r)
+        elif shared_state.sprite_name[r] == "fighter":
+            if r not in __is_direction_left:
+                __is_direction_left[r] = randint(0, 1) == 1
+            fighter_animation(r)
 
-        if (
-            shared_state.y_coordinates[r] <= -100
-            or shared_state.x_coordinates[r] >= 1100
-        ):
-            shared_state.empty_index.appendleft(r)
-            shared_state.x_coordinates[r] = 0
-            shared_state.y_coordinates[r] = 0
-            shared_state.frame_number[r] = 0
-            shared_state.animation_list[r] = None
-            shared_state.sprite_name[r] = ""
+        if delete_sprites_out_of_bounds(r):
+            print(shared_state.sprite_name[r] + " is out of bounds")
             remove_filled_sprite_index.append(r)
 
     for r in remove_filled_sprite_index:
         shared_state.filled_index.remove(r)
 
 
+def delete_sprites_out_of_bounds(r):
+    if (
+        shared_state.y_coordinates[r] <= -100
+        or shared_state.x_coordinates[r] >= 1100
+        or shared_state.y_coordinates[r] >= 1000
+    ):
+        shared_state.empty_index.appendleft(r)
+        shared_state.x_coordinates[r] = 0
+        shared_state.y_coordinates[r] = 0
+        shared_state.frame_number[r] = 0
+        shared_state.animation_list[r] = None
+        shared_state.sprite_name[r] = ""
+        return True
+    else:
+        return False
+
 def torpedo_animation(r):
     shared_state.y_coordinates[r] -= 5
+
+def fighter_animation(r):
+    shared_state.y_coordinates[r] += 1
+    if shared_state.x_coordinates[r] >= 900:
+        __is_direction_left[r] = True
+    if shared_state.x_coordinates[r] <= -70:
+        __is_direction_left[r] = False
+    
+    
+    if __is_direction_left[r]:
+        shared_state.x_coordinates[r] -= 1
+    else:
+        shared_state.x_coordinates[r] += 1

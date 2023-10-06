@@ -1,3 +1,4 @@
+from enemy_sequence import enemy_sequence_start
 from settings import pygame, screen, timer, fps
 from background import initialize_background, move_background
 from sprites import (
@@ -6,7 +7,6 @@ from sprites import (
     movement_player_sprite,
     add_sprite_movement,
 )
-import shared_state
 
 run = True
 background_height, panels, background = initialize_background()
@@ -14,6 +14,8 @@ background_height, panels, background = initialize_background()
 create_new_sprite_object(
     "./player/battlecruiser", 1
 )
+
+enemy_sequence_start()
 
 while run:
     timer.tick(fps)

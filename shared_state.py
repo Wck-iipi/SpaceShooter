@@ -1,6 +1,5 @@
 from collections import deque
 from typing import List
-from settings import pygame
 
 frame_number = [0 for _ in range(500)]  # type: List[int]
 sprite_name = ["" for _ in range(500)]  # type: List[str]
@@ -11,3 +10,4 @@ x_coordinates = [0 for _ in range(500)]  # type: List[int]
 y_coordinates = [0 for _ in range(500)]  # type: List[int]
 empty_index = deque(r for r in range(500))  # type: deque
 filled_index = deque()  # type: deque
+player_health = 100
