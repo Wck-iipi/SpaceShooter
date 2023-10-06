@@ -68,7 +68,6 @@ def start_animation():
     time_diff_bool = current_time - shared_state.last_update >= __animation_cooldown
     add_sprite_movement()
 
-
     for r in shared_state.filled_index:
         x = shared_state.x_coordinates[r]
         y = shared_state.y_coordinates[r]
@@ -120,19 +119,21 @@ def add_sprite_movement():
             if torpedo_animation(r):
                 remove_filled_sprite_index.append(r)
 
+        if (
+            shared_state.y_coordinates[r] <= -100
+            or shared_state.x_coordinates[r] >= 1100
+        ):
+            shared_state.empty_index.appendleft(r)
+            shared_state.x_coordinates[r] = 0
+            shared_state.y_coordinates[r] = 0
+            shared_state.frame_number[r] = 0
+            shared_state.animation_list[r] = None
+            shared_state.sprite_name[r] = ""
+            remove_filled_sprite_index.append(r)
+
     for r in remove_filled_sprite_index:
         shared_state.filled_index.remove(r)
 
 
 def torpedo_animation(r):
-    print(r)
-    if shared_state.y_coordinates[r] <= -50:
-        shared_state.empty_index.appendleft(r)
-        shared_state.x_coordinates[r] = 0
-        shared_state.y_coordinates[r] = 0
-        shared_state.frame_number[r] = 0
-        shared_state.animation_list[r] = None
-        shared_state.sprite_name[r] = ""
-        return True
     shared_state.y_coordinates[r] -= 5
-    
