@@ -31,7 +31,7 @@ while run:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE:
                 bullet_object = create_new_sprite_object(
-                    "./projectiles/torpedo", 2
+                    "./projectiles/torpedo", 2, 0
                 )
 
     movement_player_sprite()

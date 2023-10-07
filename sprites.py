@@ -1,4 +1,8 @@
 # TODO: Add a function to add bullets to the ships
+# TODO: Every projectile must also have a parent 
+# and if the projectile must shoot something
+# TODO: Generalise projectile_animation function 
+# further so all the projectiles can now be animated
 from settings import pygame, screen
 from random import randint
 import shared_state
@@ -90,13 +94,14 @@ def start_animation():
         )
 
 
-def create_new_sprite_object(name, scale=2):
+def create_new_sprite_object(name, scale=2, parent=None):
     index = shared_state.empty_index.popleft()
     shared_state.filled_index.append(index)
     shared_state.animation_list[index] = get_animation_list(name, scale)
     shared_state.sprite_name[index] = name.split("/")[2]
 
     if name.split("/")[1] == "projectiles":
+        __parent_sprite[index] = parent
         if name.split("/")[2] == "torpedo":
             shared_state.x_coordinates[index] = shared_state.x_coordinates[0] + 53
             shared_state.y_coordinates[index] = shared_state.y_coordinates[0]
@@ -129,7 +134,7 @@ def add_sprite_movement():
     remove_filled_sprite_index = []
     for r in shared_state.filled_index:
         if shared_state.sprite_name[r] == "torpedo":
-            torpedo_animation(r)
+            projectile_animation(r)
         elif shared_state.sprite_name[r] == "fighter":
             if r not in __is_direction_left:
                 __is_direction_left[r] = randint(0, 1) == 1
@@ -162,8 +167,9 @@ def delete_sprites_out_of_bounds(r):
         return False
 
 
-def torpedo_animation(r):
-    up_motion(r, 5)
+def projectile_animation(r):
+    if shared_state.sprite_name[__parent_sprite[r]] == "battlecruiser":
+        up_motion(r, 5)
 
 
 def fighter_animation(r):
@@ -184,29 +190,37 @@ def scout_animation(r):
     else:
         down_right_motion(r, 1, 1)
 
+
 def up_motion(r, d):
     shared_state.y_coordinates[r] -= d
+
 
 def down_motion(r, d):
     shared_state.y_coordinates[r] += d
 
+
 def right_motion(r, d):
     shared_state.x_coordinates[r] += d
 
+
 def left_motion(r, d):
     shared_state.x_coordinates[r] -= d
+
 
 def down_right_motion(r, dx, dy):
     shared_state.y_coordinates[r] += dy
     shared_state.x_coordinates[r] += dx
 
+
 def down_left_motion(r, dx, dy):
     shared_state.y_coordinates[r] += dy
     shared_state.x_coordinates[r] -= dx
 
+
 def up_right_motion(r, dx, dy):
     shared_state.y_coordinates[r] -= dy
     shared_state.x_coordinates[r] += dx
+
 
 def up_left_motion(r, dx, dy):
     shared_state.y_coordinates[r] -= dy
