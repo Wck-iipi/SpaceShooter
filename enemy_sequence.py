@@ -5,11 +5,11 @@ def enemy_sequence_start():
 
 
 def first_wave_fighter():
-    create_new_sprite_object("./enemy/scout", 2)
-    create_new_sprite_object("./enemy/scout", 2)
-    create_new_sprite_object("./enemy/scout", 2)
-    create_new_sprite_object("./enemy/scout", 2)
-    create_new_sprite_object("./enemy/scout", 2)
-    create_new_sprite_object("./enemy/scout", 2)
-    create_new_sprite_object("./enemy/scout", 2)
-    create_new_sprite_object("./enemy/scout", 2)
+    create_new_sprite_object("./enemy/fighter", 2)
+    # create_new_sprite_object("./enemy/scout", 2)
+    # create_new_sprite_object("./enemy/scout", 2)
+    # create_new_sprite_object("./enemy/scout", 2)
+    # create_new_sprite_object("./enemy/scout", 2)
+    # create_new_sprite_object("./enemy/scout", 2)
+    # create_new_sprite_object("./enemy/scout", 2)
+    # create_new_sprite_object("./enemy/scout", 2)

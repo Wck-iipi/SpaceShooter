@@ -21,11 +21,16 @@ __sprite_information = {
     "support_ship": {"frames": 10, "width": 64, "height": 64},
     "battlecruiser": {"frames": 8, "width": 128, "height": 128},
     "torpedo": {"frames": 3, "width": 11, "height": 32},
+    "bolt": {"frames": 5, "width": 9, "height": 9},
 }
 
 __animation_cooldown = 150
 
 __is_direction_left = {}
+
+__should_create_new_projectile = {}
+
+__parent_sprite = {}
 
 
 def get_image(name, frame_number, scale):
@@ -104,19 +109,20 @@ def movement_player_sprite():
     keys = pygame.key.get_pressed()
     if -25 <= shared_state.x_coordinates[0]:
         if keys[pygame.K_LEFT]:
-            shared_state.x_coordinates[0] -= 5
+            left_motion(0, 5)
 
     if shared_state.x_coordinates[0] <= 900:
         if keys[pygame.K_RIGHT]:
-            shared_state.x_coordinates[0] += 5
+            right_motion(0, 5)
 
     if 0 <= shared_state.y_coordinates[0]:
         if keys[pygame.K_UP]:
-            shared_state.y_coordinates[0] -= 5
+            print(shared_state.y_coordinates[0])
+            up_motion(0, 5)
 
     if shared_state.y_coordinates[0] <= 775:
         if keys[pygame.K_DOWN]:
-            shared_state.y_coordinates[0] += 5
+            down_motion(0, 5)
 
 
 def add_sprite_movement():
@@ -157,25 +163,51 @@ def delete_sprites_out_of_bounds(r):
 
 
 def torpedo_animation(r):
-    shared_state.y_coordinates[r] -= 5
+    up_motion(r, 5)
 
 
 def fighter_animation(r):
-    shared_state.y_coordinates[r] += 1
     if shared_state.x_coordinates[r] >= 900:
         __is_direction_left[r] = True
     if shared_state.x_coordinates[r] <= -70:
         __is_direction_left[r] = False
 
     if __is_direction_left[r]:
-        shared_state.x_coordinates[r] -= 1
+        down_left_motion(r, 3, 1)
     else:
-        shared_state.x_coordinates[r] += 1
+        down_right_motion(r, 3, 1)
 
 
 def scout_animation(r):
-    shared_state.y_coordinates[r] += 1
     if shared_state.x_coordinates[r] >= shared_state.x_coordinates[0]:
-        shared_state.x_coordinates[r] -= 1
+        down_left_motion(r, 1, 1)
     else:
-        shared_state.x_coordinates[r] += 1
+        down_right_motion(r, 1, 1)
+
+def up_motion(r, d):
+    shared_state.y_coordinates[r] -= d
+
+def down_motion(r, d):
+    shared_state.y_coordinates[r] += d
+
+def right_motion(r, d):
+    shared_state.x_coordinates[r] += d
+
+def left_motion(r, d):
+    shared_state.x_coordinates[r] -= d
+
+def down_right_motion(r, dx, dy):
+    shared_state.y_coordinates[r] += dy
+    shared_state.x_coordinates[r] += dx
+
+def down_left_motion(r, dx, dy):
+    shared_state.y_coordinates[r] += dy
+    shared_state.x_coordinates[r] -= dx
+
+def up_right_motion(r, dx, dy):
+    shared_state.y_coordinates[r] -= dy
+    shared_state.x_coordinates[r] += dx
+
+def up_left_motion(r, dx, dy):
+    shared_state.y_coordinates[r] -= dy
+    shared_state.x_coordinates[r] -= dx
