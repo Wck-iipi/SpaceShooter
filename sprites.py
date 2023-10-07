@@ -1,4 +1,4 @@
-# TODO: Object is not getting destroyed, even though index is freed:(
+# TODO: Add a function to add bullets to the ships
 from settings import pygame, screen
 from random import randint
 import shared_state
@@ -25,7 +25,8 @@ __sprite_information = {
 
 __animation_cooldown = 150
 
-__is_direction_left = { }
+__is_direction_left = {}
+
 
 def get_image(name, frame_number, scale):
     if name.split("/")[1] == "enemy" or name.split("/")[1] == "player":
@@ -99,7 +100,6 @@ def create_new_sprite_object(name, scale=2):
         shared_state.y_coordinates[index] = -90
 
 
-
 def movement_player_sprite():
     keys = pygame.key.get_pressed()
     if -25 <= shared_state.x_coordinates[0]:
@@ -128,6 +128,8 @@ def add_sprite_movement():
             if r not in __is_direction_left:
                 __is_direction_left[r] = randint(0, 1) == 1
             fighter_animation(r)
+        elif shared_state.sprite_name[r] == "scout":
+            scout_animation(r)
 
         if delete_sprites_out_of_bounds(r):
             print(shared_state.sprite_name[r] + " is out of bounds")
@@ -153,8 +155,10 @@ def delete_sprites_out_of_bounds(r):
     else:
         return False
 
+
 def torpedo_animation(r):
     shared_state.y_coordinates[r] -= 5
+
 
 def fighter_animation(r):
     shared_state.y_coordinates[r] += 1
@@ -162,9 +166,16 @@ def fighter_animation(r):
         __is_direction_left[r] = True
     if shared_state.x_coordinates[r] <= -70:
         __is_direction_left[r] = False
-    
-    
+
     if __is_direction_left[r]:
+        shared_state.x_coordinates[r] -= 1
+    else:
+        shared_state.x_coordinates[r] += 1
+
+
+def scout_animation(r):
+    shared_state.y_coordinates[r] += 1
+    if shared_state.x_coordinates[r] >= shared_state.x_coordinates[0]:
         shared_state.x_coordinates[r] -= 1
     else:
         shared_state.x_coordinates[r] += 1
