@@ -32,9 +32,9 @@ __animation_cooldown = 150
 
 __is_direction_left = {}
 
-# __should_create_new_projectile = {}
-
 __last_bullet_creation_time = {}
+
+__bullet_motion_direction = {}
 
 __parent_sprite = {}
 
@@ -96,7 +96,7 @@ def start_animation():
         )
 
 
-def create_new_sprite_object(name, scale=2, parent=None):
+def create_new_sprite_object(name, scale=2, parent=None, direction=None):
     index = shared_state.empty_index.popleft()
     shared_state.filled_index.append(index)
     shared_state.animation_list[index] = get_animation_list(name, scale)
@@ -108,12 +108,46 @@ def create_new_sprite_object(name, scale=2, parent=None):
             shared_state.x_coordinates[index] = shared_state.x_coordinates[0] + 53
             shared_state.y_coordinates[index] = shared_state.y_coordinates[0]
         elif name.split("/")[2] == "bolt":
-            shared_state.x_coordinates[index] = (
-                shared_state.x_coordinates[__parent_sprite[index]] + 53
-            )
-            shared_state.y_coordinates[index] = (
-                shared_state.y_coordinates[__parent_sprite[index]] + 90
-            )
+            if shared_state.sprite_name[__parent_sprite[index]] == "fighter":
+                shared_state.x_coordinates[index] = (
+                    shared_state.x_coordinates[__parent_sprite[index]] + 53
+                )
+                shared_state.y_coordinates[index] = (
+                    shared_state.y_coordinates[__parent_sprite[index]] + 90
+                )
+            elif shared_state.sprite_name[__parent_sprite[index]] == "bomber":
+                if direction == "down":
+                    shared_state.x_coordinates[index] = (
+                        shared_state.x_coordinates[__parent_sprite[index]] + 53
+                    )
+                    shared_state.y_coordinates[index] = (
+                        shared_state.y_coordinates[__parent_sprite[index]] + 90
+                    )
+                    __bullet_motion_direction[index] = "down"
+                elif direction == "up":
+                    shared_state.x_coordinates[index] = (
+                        shared_state.x_coordinates[__parent_sprite[index]] + 53
+                    )
+                    shared_state.y_coordinates[index] = (
+                        shared_state.y_coordinates[__parent_sprite[index]] 
+                    )
+                    __bullet_motion_direction[index] = "up"
+                elif direction == "left":
+                    shared_state.x_coordinates[index] = (
+                        shared_state.x_coordinates[__parent_sprite[index]] 
+                    )
+                    shared_state.y_coordinates[index] = (
+                        shared_state.y_coordinates[__parent_sprite[index]] + 45
+                    )
+                    __bullet_motion_direction[index] = "left"
+                elif direction == "right":
+                    shared_state.x_coordinates[index] = (
+                        shared_state.x_coordinates[__parent_sprite[index]] + 106
+                    )
+                    shared_state.y_coordinates[index] = (
+                        shared_state.y_coordinates[__parent_sprite[index]] + 45
+                    )
+                    __bullet_motion_direction[index] = "right"
 
     elif name.split("/")[1] == "enemy":
         shared_state.x_coordinates[index] = randint(0, 900)
@@ -167,21 +201,36 @@ def add_sprite_movement(current_time):
                 bolt_to_be_created.append(r)
                 __last_bullet_creation_time[r] = current_time
 
-            # __should_create_new_projectile[r] = True
-            #
-            # if __should_create_new_projectile[r]:
-            #     bolt_to_be_created.append(r)
-            #     __should_create_new_projectile[r] = False
-
         elif shared_state.sprite_name[r] == "scout":
             scout_animation(r)
+
+        elif shared_state.sprite_name[r] == "bomber":
+            bomber_animation(r)
+            time_between_bullets = 800
+
+            if r in __last_bullet_creation_time:
+                if (
+                    current_time - __last_bullet_creation_time[r]
+                    >= time_between_bullets
+                ):
+                    bolt_to_be_created.append(r)
+                    __last_bullet_creation_time[r] = current_time
+            else:
+                bolt_to_be_created.append(r)
+                __last_bullet_creation_time[r] = current_time
 
         if delete_sprites_out_of_bounds(r):
             print(shared_state.sprite_name[r] + " is out of bounds")
             remove_filled_sprite_index.append(r)
 
     for r in bolt_to_be_created:
-        create_new_sprite_object("./projectiles/bolt", 3, r)
+        if shared_state.sprite_name[r] == "fighter":
+            create_new_sprite_object("./projectiles/bolt", 3, r)
+        elif shared_state.sprite_name[r] == "bomber":
+            create_new_sprite_object("./projectiles/bolt", 3, r, "left")
+            create_new_sprite_object("./projectiles/bolt", 3, r, "right")
+            create_new_sprite_object("./projectiles/bolt", 3, r, "up")
+            create_new_sprite_object("./projectiles/bolt", 3, r, "down")
 
     for r in remove_filled_sprite_index:
         shared_state.filled_index.remove(r)
@@ -204,12 +253,36 @@ def delete_sprites_out_of_bounds(r):
         return False
 
 
+def bomber_animation(r):
+    if shared_state.y_coordinates[r] <= 200:
+        down_motion(r, 5)
+
+
 def projectile_animation(r):
     if shared_state.sprite_name[__parent_sprite[r]] == "battlecruiser":
         up_motion(r, 5)
 
     elif shared_state.sprite_name[__parent_sprite[r]] == "fighter":
         down_motion(r, 10)
+
+    elif shared_state.sprite_name[__parent_sprite[r]] == "bomber":
+        if r in __bullet_motion_direction:
+            if __bullet_motion_direction[r] == "down":
+                down_motion(r, 5)
+            elif __bullet_motion_direction[r] == "up":
+                up_motion(r, 5)
+            elif __bullet_motion_direction[r] == "left":
+                left_motion(r, 5)
+            elif __bullet_motion_direction[r] == "right":
+                right_motion(r, 5)
+            elif __bullet_motion_direction[r] == "up_left":
+                up_left_motion(r, 5, 5)
+            elif __bullet_motion_direction[r] == "up_right":
+                up_right_motion(r, 5, 5)
+            elif __bullet_motion_direction[r] == "down_left":
+                down_left_motion(r, 5, 5)
+            elif __bullet_motion_direction[r] == "down_right":
+                down_right_motion(r, 5, 5)
 
 
 def fighter_animation(r):
