@@ -5,7 +5,7 @@ from sprites import (
     start_animation,
     create_new_sprite_object,
     movement_player_sprite,
-    add_sprite_movement,
+    collision_detect
 )
 
 run = True
@@ -35,7 +35,7 @@ while run:
                 )
 
     movement_player_sprite()
-    # add_sprite_movement()
+    collision_detect()
 
     pygame.display.flip()
 

@@ -1,8 +1,3 @@
-# TODO: Add a function to add bullets to the ships
-# TODO: Every projectile must also have a parent
-# and if the projectile must shoot something
-# TODO: Generalise projectile_animation function
-# further so all the projectiles can now be animated
 from typing import Dict
 from settings import pygame, screen
 from random import randint
@@ -39,9 +34,10 @@ __bullet_motion_direction = {}
 
 __parent_sprite = {}
 
+__parent_sprite_name = {}
+
 # Bomber must wait 10 second before getting destroyed when out of bounds
 # because then the projectile's parent can have equality
-__wait_10_sec_before_destroying_dictionary = {}
 
 
 def get_image(name, frame_number, scale):
@@ -96,9 +92,8 @@ def start_animation():
             shared_state.last_update = current_time
             if shared_state.frame_number[r] >= len(shared_state.animation_list[r]):
                 shared_state.frame_number[r] = 0
-        screen.blit(
-            shared_state.animation_list[r][shared_state.frame_number[r]], (x, y)
-        )
+        image = shared_state.animation_list[r][shared_state.frame_number[r]]
+        screen.blit(pygame.transform.rotate(image, shared_state.rotation[r]), (x, y))
 
 
 def create_new_sprite_object(name, scale=2, parent=None, direction=None):
@@ -106,21 +101,25 @@ def create_new_sprite_object(name, scale=2, parent=None, direction=None):
     shared_state.filled_index.append(index)
     shared_state.animation_list[index] = get_animation_list(name, scale)
     shared_state.sprite_name[index] = name.split("/")[2]
+    shared_state.rotation[index] = 0
 
     if name.split("/")[1] == "projectiles":
         __parent_sprite[index] = parent
+        __parent_sprite_name[index] = shared_state.sprite_name[parent]
         if name.split("/")[2] == "torpedo":
             shared_state.x_coordinates[index] = shared_state.x_coordinates[0] + 53
             shared_state.y_coordinates[index] = shared_state.y_coordinates[0]
         elif name.split("/")[2] == "bolt":
-            if shared_state.sprite_name[__parent_sprite[index]] == "fighter":
+            if __parent_sprite_name[index] == "fighter":
+                shared_state.rotation[index] = 180
                 shared_state.x_coordinates[index] = (
                     shared_state.x_coordinates[__parent_sprite[index]] + 53
                 )
                 shared_state.y_coordinates[index] = (
                     shared_state.y_coordinates[__parent_sprite[index]] + 90
                 )
-            elif shared_state.sprite_name[__parent_sprite[index]] == "bomber":
+            elif __parent_sprite_name[index] == "bomber":
+                shared_state.rotation[index] = 180
                 if direction == "down":
                     shared_state.x_coordinates[index] = (
                         shared_state.x_coordinates[__parent_sprite[index]] + 53
@@ -128,6 +127,7 @@ def create_new_sprite_object(name, scale=2, parent=None, direction=None):
                     shared_state.y_coordinates[index] = (
                         shared_state.y_coordinates[__parent_sprite[index]] + 90
                     )
+                    shared_state.rotation[index] = 180
                     __bullet_motion_direction[index] = "down"
                 elif direction == "up":
                     shared_state.x_coordinates[index] = (
@@ -136,6 +136,7 @@ def create_new_sprite_object(name, scale=2, parent=None, direction=None):
                     shared_state.y_coordinates[index] = shared_state.y_coordinates[
                         __parent_sprite[index]
                     ]
+                    shared_state.rotation[index] = 0
                     __bullet_motion_direction[index] = "up"
                 elif direction == "left":
                     shared_state.x_coordinates[index] = shared_state.x_coordinates[
@@ -144,6 +145,7 @@ def create_new_sprite_object(name, scale=2, parent=None, direction=None):
                     shared_state.y_coordinates[index] = (
                         shared_state.y_coordinates[__parent_sprite[index]] + 45
                     )
+                    shared_state.rotation[index] = 90
                     __bullet_motion_direction[index] = "left"
                 elif direction == "right":
                     shared_state.x_coordinates[index] = (
@@ -152,9 +154,11 @@ def create_new_sprite_object(name, scale=2, parent=None, direction=None):
                     shared_state.y_coordinates[index] = (
                         shared_state.y_coordinates[__parent_sprite[index]] + 45
                     )
+                    shared_state.rotation[index] = -90
                     __bullet_motion_direction[index] = "right"
 
-            elif shared_state.sprite_name[__parent_sprite[index]] == "support_ship":
+            elif __parent_sprite_name[index] == "support_ship":
+                shared_state.rotation[index] = -90
                 shared_state.x_coordinates[index] = (
                     shared_state.x_coordinates[__parent_sprite[index]] + 106
                 )
@@ -164,9 +168,11 @@ def create_new_sprite_object(name, scale=2, parent=None, direction=None):
 
     elif name.split("/")[1] == "enemy":
         if shared_state.sprite_name[index] != "support_ship":
+            shared_state.rotation[index] = 180
             shared_state.x_coordinates[index] = randint(0, 900)
             shared_state.y_coordinates[index] = -90
         else:
+            shared_state.rotation[index] = -90
             shared_state.x_coordinates[index] = -30
             shared_state.y_coordinates[index] = -90
 
@@ -273,16 +279,6 @@ def delete_sprites_out_of_bounds(r, current_time=None):
         or shared_state.x_coordinates[r] >= 1100
         or shared_state.y_coordinates[r] >= 1000
     ):
-        if shared_state.sprite_name[r] == "support_ship":
-            if r not in __wait_10_sec_before_destroying_dictionary:
-                __wait_10_sec_before_destroying_dictionary[r] = current_time
-                return False
-            else:
-                if (
-                    __wait_10_sec_before_destroying_dictionary[r] - current_time
-                    <= 10000
-                ):
-                    return False
         shared_state.empty_index.appendleft(r)
         shared_state.x_coordinates[r] = 0
         shared_state.y_coordinates[r] = 0
@@ -300,13 +296,13 @@ def bomber_animation(r):
 
 
 def projectile_animation(r):
-    if shared_state.sprite_name[__parent_sprite[r]] == "battlecruiser":
+    if __parent_sprite_name[r] == "battlecruiser":
         up_motion(r, 5)
 
-    elif shared_state.sprite_name[__parent_sprite[r]] == "fighter":
+    elif __parent_sprite_name[r] == "fighter":
         down_motion(r, 10)
 
-    elif shared_state.sprite_name[__parent_sprite[r]] == "bomber":
+    elif __parent_sprite_name[r] == "bomber":
         if r in __bullet_motion_direction:
             if __bullet_motion_direction[r] == "down":
                 down_motion(r, 5)
@@ -316,8 +312,7 @@ def projectile_animation(r):
                 left_motion(r, 5)
             elif __bullet_motion_direction[r] == "right":
                 right_motion(r, 5)
-    elif shared_state.sprite_name[__parent_sprite[r]] == "support_ship":
-        print(r)
+    elif __parent_sprite_name[r] == "support_ship":
         right_motion(r, 5)
 
 
@@ -333,6 +328,60 @@ def fighter_animation(r):
         down_right_motion(r, 3, 1)
 
 
+def collision_detect():
+    torpedo_list = []
+    bolt_list = []
+    remove_states = []
+
+    for r in shared_state.filled_index:
+        if shared_state.sprite_name[r] == "torpedo":
+            torpedo_list.append(r)
+        elif shared_state.sprite_name[r] == "bolt":
+            bolt_list.append(r)
+
+    for r in shared_state.filled_index:
+        if (
+            r != 0
+            and shared_state.sprite_name[r] != "torpedo"
+            and shared_state.sprite_name[r] != "bolt"
+        ):
+            obj_rect = pygame.Rect(
+                shared_state.x_coordinates[r],
+                shared_state.y_coordinates[r],
+                __sprite_information[shared_state.sprite_name[r]]["width"],
+                __sprite_information[shared_state.sprite_name[r]]["height"],
+            )
+            for torpedo in torpedo_list:
+                torpedo_rect = pygame.Rect(
+                    shared_state.x_coordinates[torpedo],
+                    shared_state.y_coordinates[torpedo],
+                    __sprite_information[shared_state.sprite_name[torpedo]]["width"],
+                    __sprite_information[shared_state.sprite_name[torpedo]]["height"],
+                )
+                if obj_rect.colliderect(torpedo_rect):
+                    shared_state.empty_index.appendleft(r)
+                    shared_state.x_coordinates[r] = 0
+                    shared_state.y_coordinates[r] = 0
+                    shared_state.frame_number[r] = 0
+                    shared_state.animation_list[r] = None
+                    shared_state.sprite_name[r] = ""
+                    remove_states.append(r)
+                    break
+
+            player_rect = pygame.Rect(
+                shared_state.x_coordinates[0],
+                shared_state.y_coordinates[0],
+                __sprite_information[shared_state.sprite_name[0]]["width"],
+                __sprite_information[shared_state.sprite_name[0]]["height"],
+            )
+            # print(player_rect.colliderect(obj_rect))
+
+    
+    for r in remove_states:
+        shared_state.filled_index.remove(r)
+    pass
+
+
 def support_ship_animation(r):
     down_motion(r, 3)
 
@@ -342,11 +391,6 @@ def scout_animation(r):
         down_left_motion(r, 1, 1)
     else:
         down_right_motion(r, 1, 1)
-
-
-def update_time_projectile(r):
-    if __parent_sprite[r] == "fighter":
-        pass
 
 
 def up_motion(r, d):

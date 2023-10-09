@@ -6,6 +6,7 @@ sprite_name = ["" for _ in range(500)]  # type: List[str]
 scroll = 0
 last_update = 0
 animation_list = [None for _ in range(500)]
+rotation = [0 for _ in range(500)]  # type: List[int]
 x_coordinates = [0 for _ in range(500)]  # type: List[int]
 x_coordinates[0] = 400
 y_coordinates = [0 for _ in range(500)]  # type: List[int]
