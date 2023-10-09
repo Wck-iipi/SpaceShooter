@@ -1,7 +1,7 @@
 # TODO: Add a function to add bullets to the ships
-# TODO: Every projectile must also have a parent 
+# TODO: Every projectile must also have a parent
 # and if the projectile must shoot something
-# TODO: Generalise projectile_animation function 
+# TODO: Generalise projectile_animation function
 # further so all the projectiles can now be animated
 from settings import pygame, screen
 from random import randint
@@ -32,7 +32,9 @@ __animation_cooldown = 150
 
 __is_direction_left = {}
 
-__should_create_new_projectile = {}
+# __should_create_new_projectile = {}
+
+__last_bullet_creation_time = {}
 
 __parent_sprite = {}
 
@@ -79,7 +81,7 @@ def get_animation_list(name, scale=2):
 def start_animation():
     current_time = pygame.time.get_ticks()
     time_diff_bool = current_time - shared_state.last_update >= __animation_cooldown
-    add_sprite_movement()
+    add_sprite_movement(current_time)
 
     for r in shared_state.filled_index:
         x = shared_state.x_coordinates[r]
@@ -105,6 +107,14 @@ def create_new_sprite_object(name, scale=2, parent=None):
         if name.split("/")[2] == "torpedo":
             shared_state.x_coordinates[index] = shared_state.x_coordinates[0] + 53
             shared_state.y_coordinates[index] = shared_state.y_coordinates[0]
+        elif name.split("/")[2] == "bolt":
+            shared_state.x_coordinates[index] = (
+                shared_state.x_coordinates[__parent_sprite[index]] + 53
+            )
+            shared_state.y_coordinates[index] = (
+                shared_state.y_coordinates[__parent_sprite[index]] + 90
+            )
+
     elif name.split("/")[1] == "enemy":
         shared_state.x_coordinates[index] = randint(0, 900)
         shared_state.y_coordinates[index] = -90
@@ -130,21 +140,48 @@ def movement_player_sprite():
             down_motion(0, 5)
 
 
-def add_sprite_movement():
+def add_sprite_movement(current_time):
     remove_filled_sprite_index = []
+    bolt_to_be_created = []
     for r in shared_state.filled_index:
-        if shared_state.sprite_name[r] == "torpedo":
+        if (
+            shared_state.sprite_name[r] == "torpedo"
+            or shared_state.sprite_name[r] == "bolt"
+        ):
             projectile_animation(r)
         elif shared_state.sprite_name[r] == "fighter":
             if r not in __is_direction_left:
                 __is_direction_left[r] = randint(0, 1) == 1
             fighter_animation(r)
+
+            time_between_bullets = 400
+
+            if r in __last_bullet_creation_time:
+                if (
+                    current_time - __last_bullet_creation_time[r]
+                    >= time_between_bullets
+                ):
+                    bolt_to_be_created.append(r)
+                    __last_bullet_creation_time[r] = current_time
+            else:
+                bolt_to_be_created.append(r)
+                __last_bullet_creation_time[r] = current_time
+
+            # __should_create_new_projectile[r] = True
+            #
+            # if __should_create_new_projectile[r]:
+            #     bolt_to_be_created.append(r)
+            #     __should_create_new_projectile[r] = False
+
         elif shared_state.sprite_name[r] == "scout":
             scout_animation(r)
 
         if delete_sprites_out_of_bounds(r):
             print(shared_state.sprite_name[r] + " is out of bounds")
             remove_filled_sprite_index.append(r)
+
+    for r in bolt_to_be_created:
+        create_new_sprite_object("./projectiles/bolt", 3, r)
 
     for r in remove_filled_sprite_index:
         shared_state.filled_index.remove(r)
@@ -171,6 +208,9 @@ def projectile_animation(r):
     if shared_state.sprite_name[__parent_sprite[r]] == "battlecruiser":
         up_motion(r, 5)
 
+    elif shared_state.sprite_name[__parent_sprite[r]] == "fighter":
+        down_motion(r, 10)
+
 
 def fighter_animation(r):
     if shared_state.x_coordinates[r] >= 900:
@@ -189,6 +229,11 @@ def scout_animation(r):
         down_left_motion(r, 1, 1)
     else:
         down_right_motion(r, 1, 1)
+
+
+def update_time_projectile(r):
+    if __parent_sprite[r] == "fighter":
+        pass
 
 
 def up_motion(r, d):

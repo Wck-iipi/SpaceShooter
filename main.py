@@ -35,7 +35,7 @@ while run:
                 )
 
     movement_player_sprite()
-    add_sprite_movement()
+    # add_sprite_movement()
 
     pygame.display.flip()
 
