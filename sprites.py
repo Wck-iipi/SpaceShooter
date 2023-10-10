@@ -13,13 +13,23 @@ import shared_state
 # Battlecruiser - 8
 
 __sprite_information = {
-    "bomber": {"frames": 10, "width": 64, "height": 64},
-    "dreadnought": {"frames": 11, "width": 128, "height": 128},
-    "fighter": {"frames": 10, "width": 64, "height": 64},
-    "frigate": {"frames": 12, "width": 64, "height": 64},
-    "scout": {"frames": 10, "width": 64, "height": 64},
-    "support_ship": {"frames": 10, "width": 64, "height": 64},
-    "battlecruiser": {"frames": 8, "width": 128, "height": 128},
+    "bomber": {"frames": 10, "width": 64, "height": 64, "destruction_frames": 8},
+    "dreadnought": {
+        "frames": 11,
+        "width": 128,
+        "height": 128,
+        "destruction_frames": 12,
+    },
+    "fighter": {"frames": 10, "width": 64, "height": 64, "destruction_frames": 9},
+    "frigate": {"frames": 12, "width": 64, "height": 64, "destruction_frames": 9},
+    "scout": {"frames": 10, "width": 64, "height": 64, "destruction_frames": 10},
+    "support_ship": {"frames": 10, "width": 64, "height": 64, "destruction_frames": 10},
+    "battlecruiser": {
+        "frames": 8,
+        "width": 128,
+        "height": 128,
+        "destruction_frames": 18,
+    },
     "torpedo": {"frames": 3, "width": 11, "height": 32},
     "bolt": {"frames": 5, "width": 9, "height": 9},
 }
@@ -36,31 +46,46 @@ __parent_sprite = {}
 
 __parent_sprite_name = {}
 
+__delete_after_destruction = {}
+
 # Bomber must wait 10 second before getting destroyed when out of bounds
 # because then the projectile's parent can have equality
 
 
-def get_image(name, frame_number, scale):
-    if name.split("/")[1] == "enemy" or name.split("/")[1] == "player":
-        base = pygame.image.load(name + "/base.png").convert_alpha()
-        sheet_engine = pygame.image.load(name + "/engine.png").convert_alpha()
+def get_image(name, frame_number, scale, destroy):
+    if not destroy:
+        if name.split("/")[1] == "enemy" or name.split("/")[1] == "player":
+            base = pygame.image.load(name + "/base.png").convert_alpha()
+            sheet_engine = pygame.image.load(name + "/engine.png").convert_alpha()
+
+            ship_name = name.split("/")[2]
+            width = __sprite_information[ship_name]["width"]
+            height = __sprite_information[ship_name]["height"]
+
+            image = pygame.Surface([width, height], pygame.SRCALPHA).convert_alpha()
+            image.blit(sheet_engine, (0, 0), (frame_number * width, 0, width, height))
+            image.blit(base, (0, 0))
+            image = pygame.transform.scale(image, (width * scale, height * scale))
+
+            return image
+
+        elif name.split("/")[1] == "projectiles":
+            sheet = pygame.image.load(name + "/main.png").convert_alpha()
+            projectile_name = name.split("/")[2]
+            width = __sprite_information[projectile_name]["width"]
+            height = __sprite_information[projectile_name]["height"]
+
+            image = pygame.Surface([width, height], pygame.SRCALPHA).convert_alpha()
+            image.blit(sheet, (0, 0), (frame_number * width, 0, width, height))
+            image = pygame.transform.scale(image, (width * scale, height * scale))
+
+            return image
+    else:
+        sheet = pygame.image.load(name + "/destruction.png").convert_alpha()
 
         ship_name = name.split("/")[2]
         width = __sprite_information[ship_name]["width"]
         height = __sprite_information[ship_name]["height"]
-
-        image = pygame.Surface([width, height], pygame.SRCALPHA).convert_alpha()
-        image.blit(sheet_engine, (0, 0), (frame_number * width, 0, width, height))
-        image.blit(base, (0, 0))
-        image = pygame.transform.scale(image, (width * scale, height * scale))
-
-        return image
-
-    elif name.split("/")[1] == "projectiles":
-        sheet = pygame.image.load(name + "/main.png").convert_alpha()
-        projectile_name = name.split("/")[2]
-        width = __sprite_information[projectile_name]["width"]
-        height = __sprite_information[projectile_name]["height"]
 
         image = pygame.Surface([width, height], pygame.SRCALPHA).convert_alpha()
         image.blit(sheet, (0, 0), (frame_number * width, 0, width, height))
@@ -69,12 +94,16 @@ def get_image(name, frame_number, scale):
         return image
 
 
-def get_animation_list(name, scale=2):
+def get_animation_list(name, destroy, scale=2):
     ship_name = name.split("/")[2]
     animation_list = []
 
-    for i in range(__sprite_information[ship_name]["frames"]):
-        animation_list.append(get_image(name, i, scale))
+    if not destroy:
+        for i in range(__sprite_information[ship_name]["frames"]):
+            animation_list.append(get_image(name, i, scale, destroy))
+    else:
+        for i in range(__sprite_information[ship_name]["destruction_frames"]):
+            animation_list.append(get_image(name, i, scale, destroy))
 
     return animation_list
 
@@ -82,7 +111,8 @@ def get_animation_list(name, scale=2):
 def start_animation():
     current_time = pygame.time.get_ticks()
     time_diff_bool = current_time - shared_state.last_update >= __animation_cooldown
-    add_sprite_movement(current_time)
+    add_sprite_movement(current_time)  # doesn't do anything iirc for destruction
+    delete_objects = []
 
     for r in shared_state.filled_index:
         x = shared_state.x_coordinates[r]
@@ -90,16 +120,32 @@ def start_animation():
         if time_diff_bool:
             shared_state.frame_number[r] += 1
             shared_state.last_update = current_time
-            if shared_state.frame_number[r] >= len(shared_state.animation_list[r]):
+            if shared_state.frame_number[r] == len(shared_state.animation_list[r]) - 1:
+                if r in __delete_after_destruction:
+                    delete_objects.append(r)
+            elif shared_state.frame_number[r] >= len(shared_state.animation_list[r]):
                 shared_state.frame_number[r] = 0
         image = shared_state.animation_list[r][shared_state.frame_number[r]]
         screen.blit(pygame.transform.rotate(image, shared_state.rotation[r]), (x, y))
+    for r in delete_objects:
+        shared_state.empty_index.append(r)
+        shared_state.filled_index.remove(r)
+        shared_state.sprite_name[r] = ""
+        shared_state.animation_list[r] = []
+        shared_state.x_coordinates[r] = 0
+        shared_state.y_coordinates[r] = 0
+        shared_state.rotation[r] = 0
+        shared_state.frame_number[r] = 0
 
 
-def create_new_sprite_object(name, scale=2, parent=None, direction=None):
+def create_new_sprite_object(name, scale=2, parent=-1, direction="", destroy=False):
     index = shared_state.empty_index.popleft()
+
+    if destroy:
+        __delete_after_destruction[index] = True
+
     shared_state.filled_index.append(index)
-    shared_state.animation_list[index] = get_animation_list(name, scale)
+    shared_state.animation_list[index] = get_animation_list(name, destroy, scale)
     shared_state.sprite_name[index] = name.split("/")[2]
     shared_state.rotation[index] = 0
 
@@ -167,14 +213,19 @@ def create_new_sprite_object(name, scale=2, parent=None, direction=None):
                 )
 
     elif name.split("/")[1] == "enemy":
-        if shared_state.sprite_name[index] != "support_ship":
-            shared_state.rotation[index] = 180
-            shared_state.x_coordinates[index] = randint(0, 900)
-            shared_state.y_coordinates[index] = -90
+        if index not in __delete_after_destruction:
+            if shared_state.sprite_name[index] != "support_ship":
+                shared_state.rotation[index] = 180
+                shared_state.x_coordinates[index] = randint(0, 900)
+                shared_state.y_coordinates[index] = -90
+            else:
+                shared_state.rotation[index] = -90
+                shared_state.x_coordinates[index] = -30
+                shared_state.y_coordinates[index] = -90
         else:
-            shared_state.rotation[index] = -90
-            shared_state.x_coordinates[index] = -30
-            shared_state.y_coordinates[index] = -90
+            shared_state.rotation[index] = shared_state.rotation[parent]
+            shared_state.x_coordinates[index] = shared_state.x_coordinates[parent]
+            shared_state.y_coordinates[index] = shared_state.y_coordinates[parent]
 
 
 def movement_player_sprite():
@@ -291,8 +342,9 @@ def delete_sprites_out_of_bounds(r, current_time=None):
 
 
 def bomber_animation(r):
-    if shared_state.y_coordinates[r] <= 200:
-        down_motion(r, 5)
+    if r not in __delete_after_destruction:
+        if shared_state.y_coordinates[r] <= 200:
+            down_motion(r, 5)
 
 
 def projectile_animation(r):
@@ -317,21 +369,23 @@ def projectile_animation(r):
 
 
 def fighter_animation(r):
-    if shared_state.x_coordinates[r] >= 900:
-        __is_direction_left[r] = True
-    if shared_state.x_coordinates[r] <= -70:
-        __is_direction_left[r] = False
+    if r not in __delete_after_destruction:
+        if shared_state.x_coordinates[r] >= 900:
+            __is_direction_left[r] = True
+        if shared_state.x_coordinates[r] <= -70:
+            __is_direction_left[r] = False
 
-    if __is_direction_left[r]:
-        down_left_motion(r, 3, 1)
-    else:
-        down_right_motion(r, 3, 1)
+        if __is_direction_left[r]:
+            down_left_motion(r, 3, 1)
+        else:
+            down_right_motion(r, 3, 1)
 
 
 def collision_detect():
     torpedo_list = []
     bolt_list = []
     remove_states = []
+    destruction_objects = []
 
     for r in shared_state.filled_index:
         if shared_state.sprite_name[r] == "torpedo":
@@ -359,13 +413,9 @@ def collision_detect():
                     __sprite_information[shared_state.sprite_name[torpedo]]["height"],
                 )
                 if obj_rect.colliderect(torpedo_rect):
-                    shared_state.empty_index.appendleft(r)
-                    shared_state.x_coordinates[r] = 0
-                    shared_state.y_coordinates[r] = 0
-                    shared_state.frame_number[r] = 0
-                    shared_state.animation_list[r] = None
-                    shared_state.sprite_name[r] = ""
+                    destruction_objects.append(r)
                     remove_states.append(r)
+                    remove_states.append(torpedo)
                     break
 
             player_rect = pygame.Rect(
@@ -374,23 +424,35 @@ def collision_detect():
                 __sprite_information[shared_state.sprite_name[0]]["width"],
                 __sprite_information[shared_state.sprite_name[0]]["height"],
             )
-            # print(player_rect.colliderect(obj_rect))
 
-    
+    for r in destruction_objects:
+        create_new_sprite_object(
+            "./enemy/" + shared_state.sprite_name[r], 2, r, "", True
+        )
+        print(shared_state.sprite_name[r] + " is destroyed")
+
     for r in remove_states:
         shared_state.filled_index.remove(r)
+        shared_state.empty_index.appendleft(r)
+        shared_state.x_coordinates[r] = 0
+        shared_state.y_coordinates[r] = 0
+        shared_state.frame_number[r] = 0
+        shared_state.animation_list[r] = None
+        shared_state.sprite_name[r] = ""
     pass
 
 
 def support_ship_animation(r):
-    down_motion(r, 3)
+    if r not in __delete_after_destruction:
+        down_motion(r, 3)
 
 
 def scout_animation(r):
-    if shared_state.x_coordinates[r] >= shared_state.x_coordinates[0]:
-        down_left_motion(r, 1, 1)
-    else:
-        down_right_motion(r, 1, 1)
+    if r not in __delete_after_destruction:
+        if shared_state.x_coordinates[r] >= shared_state.x_coordinates[0]:
+            down_left_motion(r, 1, 1)
+        else:
+            down_right_motion(r, 1, 1)
 
 
 def up_motion(r, d):
