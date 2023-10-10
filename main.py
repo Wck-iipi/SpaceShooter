@@ -7,6 +7,7 @@ from sprites import (
     movement_player_sprite,
     collision_detect
 )
+from score import show_score
 
 run = True
 background_height, panels, background = initialize_background()
@@ -36,6 +37,7 @@ while run:
 
     movement_player_sprite()
     collision_detect()
+    show_score()
 
     pygame.display.flip()
 

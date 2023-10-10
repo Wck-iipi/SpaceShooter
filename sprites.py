@@ -3,15 +3,6 @@ from settings import pygame, screen
 from random import randint
 import shared_state
 
-# No of frames in the sprite sheet of engine
-# Bomber - 10
-# Dreadnought - 11
-# Fighter - 10
-# Frigate - 12
-# Scout - 10
-# Support_ship - 10
-# Battlecruiser - 8
-
 __sprite_information = {
     "bomber": {"frames": 10, "width": 64, "height": 64, "destruction_frames": 8},
     "dreadnought": {
@@ -47,10 +38,6 @@ __parent_sprite = {}
 __parent_sprite_name = {}
 
 __delete_after_destruction = {}
-
-# Bomber must wait 10 second before getting destroyed when out of bounds
-# because then the projectile's parent can have equality
-
 
 def get_image(name, frame_number, scale, destroy):
     if not destroy:
@@ -111,7 +98,7 @@ def get_animation_list(name, destroy, scale=2):
 def start_animation():
     current_time = pygame.time.get_ticks()
     time_diff_bool = current_time - shared_state.last_update >= __animation_cooldown
-    add_sprite_movement(current_time)  # doesn't do anything iirc for destruction
+    add_sprite_movement(current_time)
     delete_objects = []
 
     for r in shared_state.filled_index:
@@ -122,6 +109,14 @@ def start_animation():
             shared_state.last_update = current_time
             if shared_state.frame_number[r] == len(shared_state.animation_list[r]) - 1:
                 if r in __delete_after_destruction:
+                    if shared_state.sprite_name[r] == "bomber":
+                        shared_state.score += 1000
+                    elif shared_state.sprite_name[r] == "scout":
+                        shared_state.score += 100
+                    elif shared_state.sprite_name[r] == "fighter":
+                        shared_state.score += 300
+                    elif shared_state.sprite_name[r] == "support_ship":
+                        shared_state.score += 500
                     delete_objects.append(r)
             elif shared_state.frame_number[r] >= len(shared_state.animation_list[r]):
                 shared_state.frame_number[r] = 0
@@ -352,7 +347,7 @@ def projectile_animation(r):
         up_motion(r, 5)
 
     elif __parent_sprite_name[r] == "fighter":
-        down_motion(r, 10)
+        down_motion(r, 5)
 
     elif __parent_sprite_name[r] == "bomber":
         if r in __bullet_motion_direction:

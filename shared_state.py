@@ -13,4 +13,4 @@ y_coordinates = [0 for _ in range(500)]  # type: List[int]
 y_coordinates[0] = 780
 empty_index = deque(r for r in range(500))  # type: deque
 filled_index = deque()  # type: deque
-player_health = 100
+score = 0
