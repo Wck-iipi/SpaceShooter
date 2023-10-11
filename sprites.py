@@ -39,6 +39,7 @@ __parent_sprite_name = {}
 
 __delete_after_destruction = {}
 
+
 def get_image(name, frame_number, scale, destroy):
     if not destroy:
         if name.split("/")[1] == "enemy" or name.split("/")[1] == "player":
@@ -388,18 +389,26 @@ def collision_detect():
         elif shared_state.sprite_name[r] == "bolt":
             bolt_list.append(r)
 
+    player_rect = pygame.Rect(
+        shared_state.x_coordinates[0],
+        shared_state.y_coordinates[0],
+        __sprite_information[shared_state.sprite_name[0]]["width"],
+        __sprite_information[shared_state.sprite_name[0]]["height"],
+    )
+
     for r in shared_state.filled_index:
+        obj_rect = pygame.Rect(
+            shared_state.x_coordinates[r],
+            shared_state.y_coordinates[r],
+            __sprite_information[shared_state.sprite_name[r]]["width"],
+            __sprite_information[shared_state.sprite_name[r]]["height"],
+        )
         if (
             r != 0
             and shared_state.sprite_name[r] != "torpedo"
+            and r not in __delete_after_destruction
             and shared_state.sprite_name[r] != "bolt"
         ):
-            obj_rect = pygame.Rect(
-                shared_state.x_coordinates[r],
-                shared_state.y_coordinates[r],
-                __sprite_information[shared_state.sprite_name[r]]["width"],
-                __sprite_information[shared_state.sprite_name[r]]["height"],
-            )
             for torpedo in torpedo_list:
                 torpedo_rect = pygame.Rect(
                     shared_state.x_coordinates[torpedo],
@@ -412,13 +421,9 @@ def collision_detect():
                     remove_states.append(r)
                     remove_states.append(torpedo)
                     break
-
-            player_rect = pygame.Rect(
-                shared_state.x_coordinates[0],
-                shared_state.y_coordinates[0],
-                __sprite_information[shared_state.sprite_name[0]]["width"],
-                __sprite_information[shared_state.sprite_name[0]]["height"],
-            )
+        elif r != 0 and shared_state.sprite_name[r] != "torpedo":
+            if obj_rect.colliderect(player_rect):
+                shared_state.screen_number = 2
 
     for r in destruction_objects:
         create_new_sprite_object(

@@ -14,3 +14,5 @@ y_coordinates[0] = 780
 empty_index = deque(r for r in range(500))  # type: deque
 filled_index = deque()  # type: deque
 score = 0
+screen_number = 0
+start_again = True
