@@ -2,6 +2,7 @@ from collections import deque
 from settings import pygame, screen_width, screen_height, screen
 from sprites import start_animation, movement_player_sprite, collision_detect
 from score import show_score
+from enemy_sequence import enemy_sequence_start
 import shared_state
 
 BACKGROUND_COLOR = (0, 0, 0)
@@ -88,10 +89,12 @@ def return_screen_number():
 
 
 def main_game_procedure():
+    enemy_sequence_start()
     start_animation()
     movement_player_sprite()
     collision_detect()
     show_score()
+
 
 
 def initialize_values():
@@ -109,3 +112,5 @@ def initialize_values():
     shared_state.filled_index = deque()  
     shared_state.score = 0
     shared_state.start_again = True
+    shared_state.first_update = True
+

@@ -16,3 +16,5 @@ filled_index = deque()  # type: deque
 score = 0
 screen_number = 0
 start_again = True
+first_update = True
+last_update_create = 0

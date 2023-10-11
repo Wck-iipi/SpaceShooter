@@ -257,7 +257,7 @@ def add_sprite_movement(current_time):
                 __is_direction_left[r] = randint(0, 1) == 1
             fighter_animation(r)
 
-            time_between_bullets = 400
+            time_between_bullets = 800
 
             if r in __last_bullet_creation_time:
                 if (
@@ -303,7 +303,7 @@ def add_sprite_movement(current_time):
                 bolt_to_be_created.append(r)
                 __last_bullet_creation_time[r] = current_time
 
-        if delete_sprites_out_of_bounds(r, current_time):
+        if delete_sprites_out_of_bounds(r):
             print(shared_state.sprite_name[r] + " is out of bounds")
             remove_filled_sprite_index.append(r)
 
@@ -320,7 +320,7 @@ def add_sprite_movement(current_time):
         shared_state.filled_index.remove(r)
 
 
-def delete_sprites_out_of_bounds(r, current_time=None):
+def delete_sprites_out_of_bounds(r):
     if (
         shared_state.y_coordinates[r] <= -100
         or shared_state.x_coordinates[r] >= 1100
@@ -390,18 +390,45 @@ def collision_detect():
             bolt_list.append(r)
 
     player_rect = pygame.Rect(
-        shared_state.x_coordinates[0],
-        shared_state.y_coordinates[0],
-        __sprite_information[shared_state.sprite_name[0]]["width"],
-        __sprite_information[shared_state.sprite_name[0]]["height"],
+        shared_state.x_coordinates[0] + 30,
+        shared_state.y_coordinates[0] + 15 ,
+        __sprite_information[shared_state.sprite_name[0]]["width"] - 60,
+        __sprite_information[shared_state.sprite_name[0]]["height"] - 10,
     )
 
+    # pygame.draw.rect(screen, (255, 0, 0), player_rect)
+
     for r in shared_state.filled_index:
+        x = shared_state.x_coordinates[r]
+        y = shared_state.y_coordinates[r]
+        width = __sprite_information[shared_state.sprite_name[r]]["width"]
+        height = __sprite_information[shared_state.sprite_name[r]]["height"]
+
+        if shared_state.sprite_name[r] == "fighter":
+            x += 40
+            width -= 20
+            y += 15
+
+        if shared_state.sprite_name[r] == "scout":
+            x += 40
+            y += 10
+            width -= 20
+
+        if shared_state.sprite_name[r] == "bomber":
+            x += 40
+            y += 20
+            width -= 15
+            
+        if shared_state.sprite_name[r] == "support_ship":
+            x += 30
+            y += 30
+            width -= 15
+
         obj_rect = pygame.Rect(
-            shared_state.x_coordinates[r],
-            shared_state.y_coordinates[r],
-            __sprite_information[shared_state.sprite_name[r]]["width"],
-            __sprite_information[shared_state.sprite_name[r]]["height"],
+            x,
+            y,
+            width,
+            height
         )
         if (
             r != 0
@@ -409,6 +436,7 @@ def collision_detect():
             and r not in __delete_after_destruction
             and shared_state.sprite_name[r] != "bolt"
         ):
+            # pygame.draw.rect(screen, (255, 0, 0), obj_rect)
             for torpedo in torpedo_list:
                 torpedo_rect = pygame.Rect(
                     shared_state.x_coordinates[torpedo],
@@ -421,7 +449,7 @@ def collision_detect():
                     remove_states.append(r)
                     remove_states.append(torpedo)
                     break
-        elif r != 0 and shared_state.sprite_name[r] != "torpedo":
+        if r != 0 and shared_state.sprite_name[r] != "torpedo":
             if obj_rect.colliderect(player_rect):
                 shared_state.screen_number = 2
 
@@ -432,14 +460,13 @@ def collision_detect():
         print(shared_state.sprite_name[r] + " is destroyed")
 
     for r in remove_states:
-        shared_state.filled_index.remove(r)
-        shared_state.empty_index.appendleft(r)
+        if r in shared_state.filled_index:
+            shared_state.filled_index.remove(r)
         shared_state.x_coordinates[r] = 0
         shared_state.y_coordinates[r] = 0
         shared_state.frame_number[r] = 0
         shared_state.animation_list[r] = None
         shared_state.sprite_name[r] = ""
-    pass
 
 
 def support_ship_animation(r):
