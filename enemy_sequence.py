@@ -1,6 +1,6 @@
 import random
 from settings import pygame
-from sprites import create_new_sprite_object, pygame, shared_state
+from sprites import create_new_sprite_object
 import shared_state
 
 
