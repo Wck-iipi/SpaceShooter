@@ -96,21 +96,19 @@ def main_game_procedure():
     show_score()
 
 
-
 def initialize_values():
-    shared_state.frame_number = [0 for _ in range(500)]  
-    shared_state.sprite_name = ["" for _ in range(500)]  
+    shared_state.frame_number = [0 for _ in range(500)]
+    shared_state.sprite_name = ["" for _ in range(500)]
     shared_state.scroll = 0
     shared_state.last_update = 0
     shared_state.animation_list = [None for _ in range(500)]
-    shared_state.rotation = [0 for _ in range(500)]  
-    shared_state.x_coordinates = [0 for _ in range(500)]  
+    shared_state.rotation = [0 for _ in range(500)]
+    shared_state.x_coordinates = [0 for _ in range(500)]
     shared_state.x_coordinates[0] = 400
-    shared_state.y_coordinates = [0 for _ in range(500)]  
+    shared_state.y_coordinates = [0 for _ in range(500)]
     shared_state.y_coordinates[0] = 780
-    shared_state.empty_index = deque(r for r in range(500))  
-    shared_state.filled_index = deque()  
+    shared_state.empty_index = deque(r for r in range(500))
+    shared_state.filled_index = deque()
     shared_state.score = 0
     shared_state.start_again = True
     shared_state.first_update = True
-

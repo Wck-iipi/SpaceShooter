@@ -20,5 +20,5 @@ def move_background(background_height, background, panels):
         screen.blit(background, (0, (i - 1) * background_height + scroll))
 
     shared_state.scroll += 3
-    if abs(scroll)-background_height>= 0:
+    if abs(scroll) - background_height >= 0:
         shared_state.scroll = 0

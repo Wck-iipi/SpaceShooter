@@ -391,7 +391,7 @@ def collision_detect():
 
     player_rect = pygame.Rect(
         shared_state.x_coordinates[0] + 30,
-        shared_state.y_coordinates[0] + 15 ,
+        shared_state.y_coordinates[0] + 15,
         __sprite_information[shared_state.sprite_name[0]]["width"] - 60,
         __sprite_information[shared_state.sprite_name[0]]["height"] - 10,
     )
@@ -418,18 +418,13 @@ def collision_detect():
             x += 40
             y += 20
             width -= 15
-            
+
         if shared_state.sprite_name[r] == "support_ship":
             x += 30
             y += 30
             width -= 15
 
-        obj_rect = pygame.Rect(
-            x,
-            y,
-            width,
-            height
-        )
+        obj_rect = pygame.Rect(x, y, width, height)
         if (
             r != 0
             and shared_state.sprite_name[r] != "torpedo"
